@@ -1,3 +1,6 @@
 <Solution>
-  <Project Path="RentaVehiculo/RentaVehiculo.csproj" />
+  <Project Path="RentaVehiculo.Data/RentaVehiculo.Data.csproj" Id="695a6f8a-d2e4-4bb3-883d-186822dd99fc" />
+  <Project Path="RentaVehiculo/RentaVehiculo.UI.csproj" />
+  <Project Path="RentaVehiculo.Ui.Tests/RentaVehiculo.Ui.Tests.csproj" />
+  <Project Path="RentaVehiculo.WebApi/RentaVehiculo.WebApi.csproj" />
 </Solution>
