@@ -6,5 +6,10 @@ namespace RentaVehiculo
         {
             InitializeComponent();
         }
+
+        private void menuArchivoSalir_Click(object sender, EventArgs e)
+        {
+            Close();
+        }
     }
 }
