@@ -1,6 +1,6 @@
-﻿namespace RentaVehiculo.UI.Usuarios
+namespace RentaVehiculo.UI.Vehiculos
 {
-    partial class UsuarioList
+    partial class VehiculoList
     {
         private System.ComponentModel.IContainer components = null;
 
@@ -27,43 +27,55 @@
             panelToolbar.Controls.Add(button1);
             panelToolbar.Controls.Add(label1);
             panelToolbar.Dock = DockStyle.Top;
+            panelToolbar.Name = "panelToolbar";
             panelToolbar.Padding = new Padding(0, 0, 0, 8);
             panelToolbar.Size = new Size(1040, 116);
             label1.AutoSize = true;
             label1.Font = new Font("Segoe UI", 13F, FontStyle.Bold);
             label1.Location = new Point(20, 14);
-            label1.Text = "Usuarios del sistema";
+            label1.Name = "label1";
+            label1.Text = "Gestión de flota";
             button1.Font = new Font("Segoe UI", 9F);
             button1.Location = new Point(20, 58);
+            button1.Name = "button1";
             button1.Size = new Size(132, 42);
+            button1.TabIndex = 1;
             button1.Text = "Nuevo";
             button1.UseVisualStyleBackColor = true;
             button1.Click += button1_Click;
             btnModificar.Font = new Font("Segoe UI", 9F);
             btnModificar.Location = new Point(164, 58);
+            btnModificar.Name = "btnModificar";
             btnModificar.Size = new Size(132, 42);
+            btnModificar.TabIndex = 2;
             btnModificar.Text = "Modificar";
             btnModificar.UseVisualStyleBackColor = true;
             btnModificar.Click += btnModificar_Click;
             btnEliminar.Font = new Font("Segoe UI", 9F);
             btnEliminar.Location = new Point(308, 58);
+            btnEliminar.Name = "btnEliminar";
             btnEliminar.Size = new Size(132, 42);
+            btnEliminar.TabIndex = 4;
             btnEliminar.Text = "Eliminar";
             btnEliminar.UseVisualStyleBackColor = true;
             btnEliminar.Click += btnEliminar_Click;
             dataGridView1.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing;
             dataGridView1.Dock = DockStyle.Fill;
+            dataGridView1.Name = "dataGridView1";
             dataGridView1.ReadOnly = true;
             dataGridView1.RowHeadersVisible = false;
             dataGridView1.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+            AutoScaleDimensions = new SizeF(7F, 15F);
+            AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(1040, 620);
             Controls.Add(dataGridView1);
             Controls.Add(panelToolbar);
             MinimumSize = new Size(900, 460);
-            Name = "UsuarioList";
-            Text = "Usuarios";
-            Load += UsuarioList_Load;
+            Name = "VehiculoList";
+            Text = "Vehículos";
+            Load += VehiculoList_Load;
             panelToolbar.ResumeLayout(false);
+            panelToolbar.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)dataGridView1).EndInit();
             ResumeLayout(false);
         }

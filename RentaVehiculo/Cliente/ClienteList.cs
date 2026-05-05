@@ -1,31 +1,31 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection;
 using RentaVehiculo;
 using RentaVehiculo.Data.Models;
 using RentaVehiculo.UI.Infrastructure;
 using RentaVehiculo.UI.Services;
 
-namespace RentaVehiculo.UI.Usuarios;
+namespace RentaVehiculo.UI.Clientes;
 
-public partial class UsuarioList : Form
+public partial class ClienteList : Form
 {
-    private readonly UsuarioService _service;
+    private readonly ClienteService _service;
 
-    public UsuarioList(UsuarioService service)
+    public ClienteList(ClienteService service)
     {
         InitializeComponent();
         _service = service;
     }
 
-    private void UsuarioList_Load(object sender, EventArgs e)
+    private void ClienteList_Load(object sender, EventArgs e)
     {
         dataGridView1.AutoGenerateColumns = false;
         dataGridView1.Columns.Clear();
         dataGridView1.Columns.Add(new DataGridViewTextBoxColumn { HeaderText = "Id", DataPropertyName = "Id", MinimumWidth = 52, FillWeight = 35 });
         dataGridView1.Columns.Add(new DataGridViewTextBoxColumn { HeaderText = "Nombre", DataPropertyName = "Nombre", MinimumWidth = 100, FillWeight = 85 });
         dataGridView1.Columns.Add(new DataGridViewTextBoxColumn { HeaderText = "Apellido", DataPropertyName = "Apellido", MinimumWidth = 100, FillWeight = 85 });
-        dataGridView1.Columns.Add(new DataGridViewTextBoxColumn { HeaderText = "Usuario", DataPropertyName = "NombreUsuario", MinimumWidth = 100, FillWeight = 85 });
         dataGridView1.Columns.Add(new DataGridViewTextBoxColumn { HeaderText = "Email", DataPropertyName = "Email", MinimumWidth = 160, FillWeight = 120 });
-        dataGridView1.Columns.Add(new DataGridViewTextBoxColumn { HeaderText = "Rol", DataPropertyName = "Rol", MinimumWidth = 88, FillWeight = 65 });
+        dataGridView1.Columns.Add(new DataGridViewTextBoxColumn { HeaderText = "Teléfono", DataPropertyName = "Telefono", MinimumWidth = 100, FillWeight = 75 });
+        dataGridView1.Columns.Add(new DataGridViewTextBoxColumn { HeaderText = "Licencia", DataPropertyName = "Licencia", MinimumWidth = 100, FillWeight = 75 });
         dataGridView1.Columns.Add(new DataGridViewCheckBoxColumn { HeaderText = "Activo", DataPropertyName = "Activo", MinimumWidth = 72, FillWeight = 50 });
         ListFormLayout.ConfigureDataGrid(dataGridView1);
         _ = LoadDataAsync();
@@ -35,7 +35,7 @@ public partial class UsuarioList : Form
     {
         try
         {
-            dataGridView1.DataSource = await _service.GetList(u => true);
+            dataGridView1.DataSource = await _service.GetList(c => true);
         }
         catch (Exception ex)
         {
@@ -45,27 +45,28 @@ public partial class UsuarioList : Form
 
     private void button1_Click(object sender, EventArgs e)
     {
-        if (Program.ServiceProvider.GetRequiredService<UsuarioForm>().ShowDialog(this) == DialogResult.OK)
+        if (Program.ServiceProvider.GetRequiredService<ClienteForm>().ShowDialog(this) == DialogResult.OK)
             _ = LoadDataAsync();
     }
 
     private void btnModificar_Click(object sender, EventArgs e)
     {
-        if (dataGridView1.CurrentRow?.DataBoundItem is not Usuario entidad)
+        if (dataGridView1.CurrentRow?.DataBoundItem is not Cliente entidad)
         {
-            MessageBox.Show("Seleccione un usuario.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            MessageBox.Show("Seleccione un cliente.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             return;
         }
 
-        if (ActivatorUtilities.CreateInstance<UsuarioForm>(Program.ServiceProvider, entidad).ShowDialog(this) == DialogResult.OK)
+        if (ActivatorUtilities.CreateInstance<ClienteForm>(Program.ServiceProvider, entidad).ShowDialog(this) == DialogResult.OK)
             _ = LoadDataAsync();
     }
 
     private void btnEliminar_Click(object sender, EventArgs e)
     {
-        if (dataGridView1.CurrentRow?.DataBoundItem is not Usuario entidad)
+        if (dataGridView1.CurrentRow?.DataBoundItem is not Cliente entidad)
             return;
-        if (MessageBox.Show($"¿Eliminar usuario {entidad.NombreUsuario}?", "Confirmar", MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes)
+        if (MessageBox.Show($"¿Eliminar cliente {entidad.Nombre} {entidad.Apellido}?", "Confirmar",
+                MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes)
             return;
         _ = EliminarAsync(entidad.Id);
     }
