@@ -1,140 +1,83 @@
-﻿namespace RentaVehiculo.UI.Usuario
+﻿namespace RentaVehiculo.UI.Usuarios
 {
     partial class UsuarioForm
     {
-        /// <summary>
-        /// Required designer variable.
-        /// </summary>
         private System.ComponentModel.IContainer components = null;
 
-        /// <summary>
-        /// Clean up any resources being used.
-        /// </summary>
-        /// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
         protected override void Dispose(bool disposing)
         {
             if (disposing && (components != null))
-            {
                 components.Dispose();
-            }
             base.Dispose(disposing);
         }
 
-        #region Windows Form Designer generated code
-
-        /// <summary>
-        /// Required method for Designer support - do not modify
-        /// the contents of this method with the code editor.
-        /// </summary>
         private void InitializeComponent()
         {
-            menuStripUsuario = new MenuStrip();
-            menuUsuario = new ToolStripMenuItem();
-            menuUsuarioNuevo = new ToolStripMenuItem();
-            menuUsuarioGuardar = new ToolStripMenuItem();
-            menuUsuarioCerrar = new ToolStripMenuItem();
-            toolStripAccesos = new ToolStrip();
-            toolBtnNuevo = new ToolStripButton();
-            toolBtnGuardar = new ToolStripButton();
-            toolBtnCerrar = new ToolStripButton();
-            menuStripUsuario.SuspendLayout();
-            toolStripAccesos.SuspendLayout();
+            txtNombre = new TextBox();
+            txtApellido = new TextBox();
+            txtUsuario = new TextBox();
+            txtEmail = new TextBox();
+            txtPassword = new TextBox();
+            txtRol = new TextBox();
+            numSucursal = new NumericUpDown();
+            chkActivo = new CheckBox();
+            btnGuardar = new Button();
+            btnCancelar = new Button();
             SuspendLayout();
-            // 
-            // menuStripUsuario
-            // 
-            menuStripUsuario.Items.AddRange(new ToolStripItem[] { menuUsuario });
-            menuStripUsuario.Location = new Point(0, 0);
-            menuStripUsuario.Name = "menuStripUsuario";
-            menuStripUsuario.Size = new Size(900, 24);
-            menuStripUsuario.TabIndex = 0;
-            menuStripUsuario.Text = "menuStripUsuario";
-            // 
-            // menuUsuario
-            // 
-            menuUsuario.DropDownItems.AddRange(new ToolStripItem[] { menuUsuarioNuevo, menuUsuarioGuardar, menuUsuarioCerrar });
-            menuUsuario.Name = "menuUsuario";
-            menuUsuario.Size = new Size(64, 20);
-            menuUsuario.Text = "&Usuario";
-            // 
-            // menuUsuarioNuevo
-            // 
-            menuUsuarioNuevo.Name = "menuUsuarioNuevo";
-            menuUsuarioNuevo.Size = new Size(116, 22);
-            menuUsuarioNuevo.Text = "&Nuevo";
-            // 
-            // menuUsuarioGuardar
-            // 
-            menuUsuarioGuardar.Name = "menuUsuarioGuardar";
-            menuUsuarioGuardar.Size = new Size(116, 22);
-            menuUsuarioGuardar.Text = "&Guardar";
-            // 
-            // menuUsuarioCerrar
-            // 
-            menuUsuarioCerrar.Name = "menuUsuarioCerrar";
-            menuUsuarioCerrar.Size = new Size(116, 22);
-            menuUsuarioCerrar.Text = "&Cerrar";
-            menuUsuarioCerrar.Click += menuUsuarioCerrar_Click;
-            // 
-            // toolStripAccesos
-            // 
-            toolStripAccesos.Items.AddRange(new ToolStripItem[] { toolBtnNuevo, toolBtnGuardar, toolBtnCerrar });
-            toolStripAccesos.Location = new Point(0, 24);
-            toolStripAccesos.Name = "toolStripAccesos";
-            toolStripAccesos.Size = new Size(900, 25);
-            toolStripAccesos.TabIndex = 1;
-            toolStripAccesos.Text = "toolStripAccesos";
-            // 
-            // toolBtnNuevo
-            // 
-            toolBtnNuevo.DisplayStyle = ToolStripItemDisplayStyle.Text;
-            toolBtnNuevo.Name = "toolBtnNuevo";
-            toolBtnNuevo.Size = new Size(46, 22);
-            toolBtnNuevo.Text = "Nuevo";
-            // 
-            // toolBtnGuardar
-            // 
-            toolBtnGuardar.DisplayStyle = ToolStripItemDisplayStyle.Text;
-            toolBtnGuardar.Name = "toolBtnGuardar";
-            toolBtnGuardar.Size = new Size(53, 22);
-            toolBtnGuardar.Text = "Guardar";
-            // 
-            // toolBtnCerrar
-            // 
-            toolBtnCerrar.DisplayStyle = ToolStripItemDisplayStyle.Text;
-            toolBtnCerrar.Name = "toolBtnCerrar";
-            toolBtnCerrar.Size = new Size(45, 22);
-            toolBtnCerrar.Text = "Cerrar";
-            toolBtnCerrar.Click += menuUsuarioCerrar_Click;
-            // 
-            // UsuarioForm
-            // 
-            AutoScaleDimensions = new SizeF(10F, 25F);
-            AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(900, 600);
-            Controls.Add(toolStripAccesos);
-            Controls.Add(menuStripUsuario);
-            MainMenuStrip = menuStripUsuario;
-            Name = "UsuarioForm";
-            Text = "Formulario de Usuario";
-            menuStripUsuario.ResumeLayout(false);
-            menuStripUsuario.PerformLayout();
-            toolStripAccesos.ResumeLayout(false);
-            toolStripAccesos.PerformLayout();
+            txtNombre.Location = new Point(200, 24);
+            txtNombre.Size = new Size(260, 23);
+            txtApellido.Location = new Point(200, 64);
+            txtApellido.Size = new Size(260, 23);
+            txtUsuario.Location = new Point(200, 104);
+            txtUsuario.Size = new Size(260, 23);
+            txtEmail.Location = new Point(200, 144);
+            txtEmail.Size = new Size(260, 23);
+            txtPassword.Location = new Point(200, 184);
+            txtPassword.Size = new Size(260, 23);
+            txtPassword.PasswordChar = '•';
+            txtRol.Location = new Point(200, 224);
+            txtRol.Size = new Size(260, 23);
+            numSucursal.Location = new Point(200, 264);
+            numSucursal.Maximum = 1000000;
+            chkActivo.Location = new Point(200, 304);
+            chkActivo.Text = "Activo";
+            btnGuardar.Location = new Point(200, 356);
+            btnGuardar.Size = new Size(115, 38);
+            btnGuardar.Text = "Guardar";
+            btnGuardar.UseVisualStyleBackColor = true;
+            btnGuardar.Click += btnGuardar_Click;
+            btnCancelar.Location = new Point(325, 356);
+            btnCancelar.Size = new Size(115, 38);
+            btnCancelar.Text = "Cancelar";
+            btnCancelar.UseVisualStyleBackColor = true;
+            btnCancelar.DialogResult = DialogResult.Cancel;
+            Controls.AddRange(new Control[] {
+                new Label { Text = "Nombre:", Location = new Point(20, 27), AutoSize = true },
+                new Label { Text = "Apellido:", Location = new Point(20, 67), AutoSize = true },
+                new Label { Text = "Nombre usuario:", Location = new Point(20, 107), AutoSize = true },
+                new Label { Text = "Email:", Location = new Point(20, 147), AutoSize = true },
+                new Label { Text = "Contraseña:", Location = new Point(20, 187), AutoSize = true },
+                new Label { Text = "Rol:", Location = new Point(20, 227), AutoSize = true },
+                new Label { Text = "Id sucursal (opc.):", Location = new Point(20, 267), AutoSize = true },
+                txtNombre, txtApellido, txtUsuario, txtEmail, txtPassword, txtRol, numSucursal, chkActivo, btnGuardar, btnCancelar });
+            AutoScroll = true;
+            ClientSize = new Size(500, 420);
+            FormBorderStyle = FormBorderStyle.FixedDialog;
+            Padding = new Padding(12);
+            StartPosition = FormStartPosition.CenterParent;
+            Text = "Usuario";
             ResumeLayout(false);
-            PerformLayout();
         }
 
-        #endregion
-
-        private MenuStrip menuStripUsuario;
-        private ToolStripMenuItem menuUsuario;
-        private ToolStripMenuItem menuUsuarioNuevo;
-        private ToolStripMenuItem menuUsuarioGuardar;
-        private ToolStripMenuItem menuUsuarioCerrar;
-        private ToolStrip toolStripAccesos;
-        private ToolStripButton toolBtnNuevo;
-        private ToolStripButton toolBtnGuardar;
-        private ToolStripButton toolBtnCerrar;
+        private TextBox txtNombre;
+        private TextBox txtApellido;
+        private TextBox txtUsuario;
+        private TextBox txtEmail;
+        private TextBox txtPassword;
+        private TextBox txtRol;
+        private NumericUpDown numSucursal;
+        private CheckBox chkActivo;
+        private Button btnGuardar;
+        private Button btnCancelar;
     }
 }

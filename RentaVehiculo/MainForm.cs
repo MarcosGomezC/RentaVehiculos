@@ -1,5 +1,13 @@
 using System.ComponentModel;
 using Guna.UI2.WinForms;
+using Microsoft.Extensions.DependencyInjection;
+using RentaVehiculo.UI.Clientes;
+using RentaVehiculo.UI.Facturas;
+using RentaVehiculo.UI.Mantenimientos;
+using RentaVehiculo.UI.Rentas;
+using RentaVehiculo.UI.Reservas;
+using RentaVehiculo.UI.Services;
+using RentaVehiculo.UI.Vehiculos;
 
 namespace RentaVehiculo
 {
@@ -11,17 +19,32 @@ namespace RentaVehiculo
         private readonly Color _textMuted = Color.FromArgb(148, 163, 184);
         private readonly Color _textDark = Color.FromArgb(15, 23, 42);
 
+        private DashboardService? _dashboard;
+
         private Guna2Panel _pnlSidebar = null!;
         private Guna2Panel _pnlMain = null!;
         private readonly List<Guna2Button> _navButtons = new();
 
+        private Label? _kpiVehVal;
+        private Label? _kpiVehSub;
+        private Label? _kpiRentVal;
+        private Label? _kpiRentSub;
+        private Label? _kpiMantVal;
+        private Label? _kpiMantSub;
+        private FlowLayoutPanel? _flpAlerts;
+
+        /// <summary>Constructor sin parámetros para el diseñador de Visual Studio.</summary>
         public MainForm()
         {
             InitializeComponent();
             DoubleBuffered = true;
+        }
+
+        public MainForm(DashboardService dashboard) : this()
+        {
+            _dashboard = dashboard;
 
             // En tiempo de diseño el diseñador solo pinta lo declarado en MainForm.Designer.cs.
-            // BuildDashboard() no se ejecuta de forma fiable aquí; no mostrar controles Guna en diseño.
             if (LicenseManager.UsageMode == LicenseUsageMode.Designtime)
                 return;
 
@@ -51,9 +74,8 @@ namespace RentaVehiculo
 
             var pnlHeader = new Panel
             {
-                Dock = DockStyle.Top,
-                Height = 76,
-                Padding = new Padding(0, 0, 0, 8),
+                Dock = DockStyle.Fill,
+                Padding = new Padding(0, 4, 0, 12),
                 BackColor = Color.Transparent
             };
             var lblBrand = new Label
@@ -70,16 +92,23 @@ namespace RentaVehiculo
                 Font = new Font("Segoe UI", 9F),
                 ForeColor = _textMuted,
                 AutoSize = true,
-                Location = new Point(0, 34)
+                Location = new Point(0, 0)
             };
             pnlHeader.Controls.Add(lblBrand);
             pnlHeader.Controls.Add(lblSubBrand);
+            pnlHeader.Layout += (_, _) =>
+            {
+                lblSubBrand.Top = lblBrand.Bottom + 6;
+            };
 
-            var pnlNavHost = new Panel
+            var pnlNavHost = new FlowLayoutPanel
             {
                 Dock = DockStyle.Fill,
-                BackColor = Color.Transparent,
-                Padding = new Padding(0, 8, 0, 8)
+                FlowDirection = FlowDirection.TopDown,
+                WrapContents = false,
+                AutoScroll = true,
+                Padding = new Padding(0, 4, 0, 12),
+                BackColor = Color.Transparent
             };
 
             (int iconCode, string label)[] navItems =
@@ -95,8 +124,8 @@ namespace RentaVehiculo
             for (var i = 0; i < navItems.Length; i++)
             {
                 var btn = CreateNavButton(navItems[i].label, navItems[i].iconCode, i);
-                btn.Location = new Point(0, i * 46);
-                btn.Size = new Size(pnlNavHost.Width, 40);
+                btn.Margin = new Padding(0, 0, 0, 8);
+                btn.Height = 52;
                 pnlNavHost.Controls.Add(btn);
                 _navButtons.Add(btn);
             }
@@ -105,8 +134,8 @@ namespace RentaVehiculo
 
             var pnlProfile = new Guna2Panel
             {
-                Dock = DockStyle.Bottom,
-                Height = 72,
+                Dock = DockStyle.Fill,
+                MinimumSize = new Size(0, 72),
                 FillColor = Color.FromArgb(30, 41, 59),
                 BorderRadius = 12,
                 Margin = new Padding(0, 12, 0, 0)
@@ -152,14 +181,36 @@ namespace RentaVehiculo
             pnlProfile.Controls.Add(lblUser);
             pnlProfile.Controls.Add(lblMail);
 
-            _pnlSidebar.Controls.Add(pnlProfile);
-            _pnlSidebar.Controls.Add(pnlHeader);
-            _pnlSidebar.Controls.Add(pnlNavHost);
-            _pnlSidebar.Resize += (_, _) =>
+            var sidebarLayout = new TableLayoutPanel
             {
-                foreach (Guna2Button b in _navButtons)
-                    b.Width = pnlNavHost.ClientSize.Width;
+                Dock = DockStyle.Fill,
+                BackColor = Color.Transparent,
+                Padding = new Padding(0),
+                Margin = new Padding(0)
             };
+            sidebarLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+            sidebarLayout.RowCount = 3;
+            pnlHeader.AutoSize = true;
+            pnlHeader.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+            sidebarLayout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            sidebarLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
+            sidebarLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 84F));
+            sidebarLayout.Controls.Add(pnlHeader, 0, 0);
+            sidebarLayout.Controls.Add(pnlNavHost, 0, 1);
+            sidebarLayout.Controls.Add(pnlProfile, 0, 2);
+            _pnlSidebar.Controls.Add(sidebarLayout);
+
+            void SyncNavButtonWidths()
+            {
+                var w = pnlNavHost.ClientSize.Width - pnlNavHost.Padding.Horizontal;
+                if (w < 80)
+                    w = 200;
+                foreach (Guna2Button b in _navButtons)
+                    b.Width = w;
+            }
+
+            pnlNavHost.Resize += (_, _) => SyncNavButtonWidths();
+            _pnlSidebar.Resize += (_, _) => SyncNavButtonWidths();
 
             _pnlMain = new Guna2Panel
             {
@@ -176,15 +227,14 @@ namespace RentaVehiculo
                 Font = new Font("Segoe UI", 22F, FontStyle.Bold),
                 ForeColor = _textDark,
                 AutoSize = true,
-                Location = new Point(0, 0)
+                Margin = new Padding(0, 0, 0, 6)
             };
             var headerSub = new Label
             {
                 Text = "Bienvenido al sistema de gestión de renta de vehículos",
                 Font = new Font("Segoe UI", 9.5F),
                 ForeColor = Color.FromArgb(100, 116, 139),
-                AutoSize = true,
-                Location = new Point(0, 38)
+                AutoSize = true
             };
 
             var cardsRow = new TableLayoutPanel
@@ -192,8 +242,8 @@ namespace RentaVehiculo
                 ColumnCount = 3,
                 RowCount = 1,
                 Dock = DockStyle.Top,
-                Height = 130,
-                Margin = new Padding(0, 12, 0, 0),
+                Height = 302,
+                Margin = new Padding(0, 16, 0, 0),
                 Padding = new Padding(0),
                 BackColor = Color.Transparent
             };
@@ -201,15 +251,26 @@ namespace RentaVehiculo
             cardsRow.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33.33F));
             cardsRow.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33.34F));
 
-            cardsRow.Controls.Add(CreateSummaryCard(
-                "Vehículos Activos", "42", "+5 este mes", Color.FromArgb(34, 197, 94),
-                Mdl2Char(0xE7C1)), 0, 0);
-            cardsRow.Controls.Add(CreateSummaryCard(
-                "Rentas Próximas a Vencer", "8", "Hoy y mañana", Color.FromArgb(249, 115, 22),
-                Mdl2Char(0xE916), subForeColor: Color.FromArgb(239, 68, 68)), 1, 0);
-            cardsRow.Controls.Add(CreateSummaryCard(
-                "Alertas de Mantenimiento", "3", "Requieren atención", Color.FromArgb(234, 88, 12),
-                Mdl2Char(0xE946), subForeColor: Color.FromArgb(239, 68, 68)), 2, 0);
+            var kpi1 = CreateSummaryCard(
+                "Vehículos Activos", "—", "Cargando…", Color.FromArgb(34, 197, 94),
+                Mdl2Char(0xE7C1));
+            cardsRow.Controls.Add(kpi1.Outer, 0, 0);
+            _kpiVehVal = kpi1.Value;
+            _kpiVehSub = kpi1.Sub;
+
+            var kpi2 = CreateSummaryCard(
+                "Rentas Próximas a Vencer", "—", "Cargando…", Color.FromArgb(249, 115, 22),
+                Mdl2Char(0xE916), subForeColor: Color.FromArgb(239, 68, 68));
+            cardsRow.Controls.Add(kpi2.Outer, 1, 0);
+            _kpiRentVal = kpi2.Value;
+            _kpiRentSub = kpi2.Sub;
+
+            var kpi3 = CreateSummaryCard(
+                "Mantenimientos abiertos", "—", "Cargando…", Color.FromArgb(234, 88, 12),
+                Mdl2Char(0xE946), subForeColor: Color.FromArgb(239, 68, 68));
+            cardsRow.Controls.Add(kpi3.Outer, 2, 0);
+            _kpiMantVal = kpi3.Value;
+            _kpiMantSub = kpi3.Sub;
 
             var lblQuick = new Label
             {
@@ -231,13 +292,17 @@ namespace RentaVehiculo
             };
             quickGrid.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
             quickGrid.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
-            quickGrid.RowStyles.Add(new RowStyle(SizeType.Absolute, 88F));
-            quickGrid.RowStyles.Add(new RowStyle(SizeType.Absolute, 88F));
+            quickGrid.RowStyles.Add(new RowStyle(SizeType.Absolute, 102F));
+            quickGrid.RowStyles.Add(new RowStyle(SizeType.Absolute, 102F));
 
-            quickGrid.Controls.Add(CreateQuickCard("Nueva Renta", "Registrar una nueva renta de vehículo", Mdl2Char(0xE710)), 0, 0);
-            quickGrid.Controls.Add(CreateQuickCard("Registrar Cliente", "Añadir un nuevo cliente al sistema", Mdl2Char(0xE716)), 1, 0);
-            quickGrid.Controls.Add(CreateQuickCard("Ver Disponibilidad", "Consultar vehículos disponibles", Mdl2Char(0xE7B3)), 0, 1);
-            quickGrid.Controls.Add(CreateQuickCard("Estado de Mantenimiento", "Revisar mantenimientos programados", Mdl2Char(0xE713)), 1, 1);
+            quickGrid.Controls.Add(CreateQuickCard("Nueva Renta", "Registrar una nueva renta de vehículo", Mdl2Char(0xE710),
+                () => Program.ServiceProvider.GetRequiredService<RentaForm>().ShowDialog(this)), 0, 0);
+            quickGrid.Controls.Add(CreateQuickCard("Registrar Cliente", "Añadir un nuevo cliente al sistema", Mdl2Char(0xE716),
+                () => Program.ServiceProvider.GetRequiredService<ClienteForm>().ShowDialog(this)), 1, 0);
+            quickGrid.Controls.Add(CreateQuickCard("Ver Disponibilidad", "Consultar vehículos disponibles", Mdl2Char(0xE7B3),
+                () => Program.ServiceProvider.GetRequiredService<VehiculoList>().Show()), 0, 1);
+            quickGrid.Controls.Add(CreateQuickCard("Estado de Mantenimiento", "Revisar mantenimientos programados", Mdl2Char(0xE713),
+                () => Program.ServiceProvider.GetRequiredService<MantenimientoList>().Show()), 1, 1);
 
             var quickWrap = new Panel
             {
@@ -280,27 +345,16 @@ namespace RentaVehiculo
                 AutoSizeMode = AutoSizeMode.GrowAndShrink,
                 Width = 800,
                 BackColor = Color.Transparent,
-                Padding = new Padding(8, 8, 8, 8)
+                Padding = new Padding(12, 12, 12, 16)
             };
-
-            flpAlerts.Controls.Add(CreateAlertRow(
-                Color.FromArgb(59, 130, 246), Mdl2Char(0xE713),
-                "Mantenimiento Programado", "Toyota Camry 2023 - Revisión de 10,000 km", "Mañana"));
-
-            flpAlerts.Controls.Add(CreateAlertRow(
-                Color.FromArgb(249, 115, 22), Mdl2Char(0xE916),
-                "Renta por Vencer", "Honda CR-V - Cliente: Juan Pérez", "En 2 horas"));
-
-            flpAlerts.Controls.Add(CreateAlertRow(
-                Color.FromArgb(239, 68, 68), Mdl2Char(0xE814),
-                "Renta Vencida", "Nissan Sentra - Cliente: María González", "Hace 1 día"));
+            _flpAlerts = flpAlerts;
 
             pnlAlertsBox.Controls.Add(lblAlerts);
             pnlAlertsBox.Controls.Add(flpAlerts);
-            lblAlerts.Left = 16;
-            lblAlerts.Top = 12;
-            flpAlerts.Left = 8;
-            flpAlerts.Top = 44;
+            lblAlerts.Left = 20;
+            lblAlerts.Top = 16;
+            flpAlerts.Left = 12;
+            flpAlerts.Top = 48;
             flpAlerts.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             pnlAlertsBox.Resize += (_, _) =>
             {
@@ -346,11 +400,35 @@ namespace RentaVehiculo
             var headerPanel = new Panel
             {
                 Dock = DockStyle.Top,
-                Height = 72,
+                AutoSize = true,
+                AutoSizeMode = AutoSizeMode.GrowAndShrink,
+                Padding = new Padding(0, 0, 0, 12),
                 BackColor = Color.Transparent
             };
-            headerPanel.Controls.Add(headerTitle);
-            headerPanel.Controls.Add(headerSub);
+            var headerStack = new TableLayoutPanel
+            {
+                Dock = DockStyle.Top,
+                AutoSize = true,
+                ColumnCount = 1,
+                RowCount = 2,
+                BackColor = Color.Transparent,
+                Padding = new Padding(0),
+                Margin = new Padding(0)
+            };
+            headerStack.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+            headerStack.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            headerStack.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            headerStack.Controls.Add(headerTitle, 0, 0);
+            headerStack.Controls.Add(headerSub, 0, 1);
+            headerPanel.Controls.Add(headerStack);
+            headerPanel.Layout += (_, _) =>
+            {
+                var w = headerPanel.ClientSize.Width;
+                if (w <= 0)
+                    return;
+                headerSub.MaximumSize = new Size(w, 0);
+                headerTitle.MaximumSize = new Size(w, 0);
+            };
 
             _pnlMain.Controls.Add(contentHost);
             _pnlMain.Controls.Add(headerPanel);
@@ -358,12 +436,84 @@ namespace RentaVehiculo
             Controls.Add(_pnlMain);
             Controls.Add(_pnlSidebar);
 
-            Shown += (_, _) =>
+            Shown += async (_, _) =>
             {
+                SyncNavButtonWidths();
                 quickWrap.Width = _pnlMain.ClientSize.Width - _pnlMain.Padding.Horizontal;
                 quickGrid.Width = quickWrap.Width;
                 flpAlerts.Width = Math.Max(flpAlerts.Width, _pnlMain.ClientSize.Width - _pnlMain.Padding.Horizontal - 24);
+                await RefreshDashboardAsync();
             };
+        }
+
+        private async Task RefreshDashboardAsync()
+        {
+            if (_dashboard is null || _kpiVehVal is null || _flpAlerts is null)
+                return;
+
+            try
+            {
+                var d = await _dashboard.ObtenerAsync();
+
+                _kpiVehVal.Text = d.VehiculosActivos.ToString();
+                _kpiVehSub!.Text = d.VehiculosAltaEsteMes > 0
+                    ? $"+{d.VehiculosAltaEsteMes} registrados este mes"
+                    : "Sin altas este mes";
+                _kpiVehSub.ForeColor = d.VehiculosAltaEsteMes > 0
+                    ? Color.FromArgb(34, 197, 94)
+                    : Color.FromArgb(100, 116, 139);
+
+                _kpiRentVal!.Text = d.RentasProximasAVencer.ToString();
+                _kpiRentSub!.Text = d.RentasProximasAVencer > 0
+                    ? "Fin programado hoy o mañana (sin cierre)"
+                    : "Ninguna en ventana inmediata";
+                _kpiRentSub.ForeColor = d.RentasProximasAVencer > 0
+                    ? Color.FromArgb(239, 68, 68)
+                    : Color.FromArgb(100, 116, 139);
+
+                _kpiMantVal!.Text = d.MantenimientosAbiertos.ToString();
+                _kpiMantSub!.Text = d.MantenimientosAbiertos > 0
+                    ? "Sin fecha de cierre registrada"
+                    : "Sin mantenimientos abiertos";
+                _kpiMantSub.ForeColor = d.MantenimientosAbiertos > 0
+                    ? Color.FromArgb(239, 68, 68)
+                    : Color.FromArgb(100, 116, 139);
+
+                _flpAlerts.Controls.Clear();
+                if (d.Alertas.Count == 0)
+                {
+                    var vacío = new Label
+                    {
+                        Text = "No hay alertas recientes.",
+                        Font = new Font("Segoe UI", 9.5F),
+                        ForeColor = Color.FromArgb(100, 116, 139),
+                        AutoSize = true,
+                        Padding = new Padding(8, 12, 8, 8)
+                    };
+                    _flpAlerts.Controls.Add(vacío);
+                }
+                else
+                {
+                    foreach (var a in d.Alertas)
+                        _flpAlerts.Controls.Add(CreateAlertRowFromItem(a));
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"No se pudieron cargar los datos del panel: {ex.Message}", "Dashboard",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
+        }
+
+        private Control CreateAlertRowFromItem(DashboardAlertaItem a)
+        {
+            var (color, icon) = a.Tipo switch
+            {
+                DashboardAlertaTipo.Peligro => (Color.FromArgb(239, 68, 68), Mdl2Char(0xE814)),
+                DashboardAlertaTipo.Advertencia => (Color.FromArgb(249, 115, 22), Mdl2Char(0xE916)),
+                _ => (Color.FromArgb(59, 130, 246), Mdl2Char(0xE713))
+            };
+            return CreateAlertRow(color, icon, a.Titulo, a.Detalle, a.Plazo);
         }
 
         private static string Mdl2Char(int codepoint) =>
@@ -388,11 +538,11 @@ namespace RentaVehiculo
             var lblIcon = new Label
             {
                 Text = Mdl2Char(mdl2IconCode),
-                Font = new Font("Segoe MDL2 Assets", 11F),
+                Font = new Font("Segoe MDL2 Assets", 12F),
                 ForeColor = Color.FromArgb(203, 213, 225),
                 AutoSize = false,
-                Size = new Size(32, 40),
-                Location = new Point(10, 0),
+                Size = new Size(36, 44),
+                Location = new Point(12, 0),
                 TextAlign = ContentAlignment.MiddleLeft,
                 BackColor = Color.Transparent,
                 Cursor = Cursors.Hand
@@ -403,15 +553,23 @@ namespace RentaVehiculo
                 Font = new Font("Segoe UI", 10F),
                 ForeColor = Color.White,
                 AutoSize = false,
-                Size = new Size(btn.Width - 48, 40),
-                Location = new Point(42, 0),
+                Size = new Size(160, 44),
+                Location = new Point(48, 0),
                 TextAlign = ContentAlignment.MiddleLeft,
                 BackColor = Color.Transparent,
                 Cursor = Cursors.Hand
             };
             btn.Controls.Add(lblIcon);
             btn.Controls.Add(lblText);
-            btn.Resize += (_, _) => lblText.Width = btn.ClientSize.Width - 48;
+            void SyncNavBtnLayout()
+            {
+                lblText.Width = Math.Max(80, btn.ClientSize.Width - 56);
+                var y = Math.Max(0, (btn.ClientSize.Height - lblIcon.Height) / 2);
+                lblIcon.Top = y;
+                lblText.Top = y;
+            }
+            btn.Resize += (_, _) => SyncNavBtnLayout();
+            btn.HandleCreated += (_, _) => SyncNavBtnLayout();
             void forwardClick(object? s, EventArgs e) => NavButton_Click(btn, e);
             lblIcon.Click += forwardClick;
             lblText.Click += forwardClick;
@@ -422,8 +580,34 @@ namespace RentaVehiculo
         private void NavButton_Click(object? sender, EventArgs e)
         {
             var btn = sender as Guna2Button ?? (sender as Control)?.Parent as Guna2Button;
-            if (btn?.Tag is int idx)
-                SetSelectedNav(idx);
+            if (btn?.Tag is not int idx)
+                return;
+            SetSelectedNav(idx);
+            OpenModule(idx);
+        }
+
+        private void OpenModule(int index)
+        {
+            try
+            {
+                var sp = Program.ServiceProvider;
+                Form formToShow = index switch
+                {
+                    0 => sp.GetRequiredService<VehiculoList>(),
+                    1 => sp.GetRequiredService<ClienteList>(),
+                    2 => sp.GetRequiredService<ReservaList>(),
+                    3 => sp.GetRequiredService<RentaList>(),
+                    4 => sp.GetRequiredService<MantenimientoList>(),
+                    5 => sp.GetRequiredService<FacturaList>(),
+                    _ => throw new ArgumentOutOfRangeException(nameof(index))
+                };
+                formToShow.Show();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"No se pudo abrir el módulo: {ex.Message}", "Error",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
         private void SetSelectedNav(int index)
@@ -447,12 +631,12 @@ namespace RentaVehiculo
             }
         }
 
-        private Control CreateSummaryCard(string title, string value, string sub, Color iconBg, string iconChar,
-            Color? subForeColor = null)
+        private (Control Outer, Label Value, Label Sub) CreateSummaryCard(string title, string value, string sub,
+            Color iconBg, string iconChar, Color? subForeColor = null)
         {
             var outer = new Panel
             {
-                Padding = new Padding(0, 0, 12, 0),
+                Padding = new Padding(0, 0, 8, 0),
                 Dock = DockStyle.Fill,
                 BackColor = Color.Transparent
             };
@@ -464,27 +648,33 @@ namespace RentaVehiculo
                 BorderRadius = 12,
                 BorderThickness = 1,
                 BorderColor = Color.FromArgb(226, 232, 240),
-                Padding = new Padding(18, 16, 18, 16),
+                Padding = new Padding(18, 16, 14, 22),
                 Margin = new Padding(0),
+                MinimumSize = new Size(0, 248),
                 ShadowDecoration = { Enabled = true, Depth = 6, Color = Color.FromArgb(35, 0, 0, 0) }
+            };
+
+            var textPane = new Panel
+            {
+                BackColor = Color.Transparent
             };
 
             var lblTitle = new Label
             {
                 Text = title,
-                Font = new Font("Segoe UI", 9F),
+                Font = new Font("Segoe UI", 9.5F),
                 ForeColor = Color.FromArgb(100, 116, 139),
                 AutoSize = true,
-                Location = new Point(18, 16)
+                UseMnemonic = false
             };
 
             var lblVal = new Label
             {
                 Text = value,
-                Font = new Font("Segoe UI", 28F, FontStyle.Bold),
+                Font = new Font("Segoe UI", 26F, FontStyle.Bold),
                 ForeColor = _textDark,
                 AutoSize = true,
-                Location = new Point(18, 38)
+                UseMnemonic = false
             };
 
             var subColor = subForeColor ?? (sub.StartsWith('+') ? Color.FromArgb(34, 197, 94) : Color.FromArgb(239, 68, 68));
@@ -494,19 +684,22 @@ namespace RentaVehiculo
                 Font = new Font("Segoe UI", 9F),
                 ForeColor = subColor,
                 AutoSize = true,
-                Location = new Point(18, 86)
+                UseMnemonic = false
             };
+
+            textPane.Controls.Add(lblTitle);
+            textPane.Controls.Add(lblVal);
+            textPane.Controls.Add(lblSub);
 
             var iconPanel = new Guna2Panel
             {
-                Size = new Size(48, 48),
+                Size = new Size(46, 46),
                 FillColor = iconBg,
-                BorderRadius = 10,
-                Location = new Point(card.Width - 66, 20),
+                BorderRadius = 11,
                 Anchor = AnchorStyles.Top | AnchorStyles.Right
             };
 
-            var fontMdl = new Font("Segoe MDL2 Assets", 18F, FontStyle.Regular, GraphicsUnit.Point);
+            var fontMdl = new Font("Segoe MDL2 Assets", 17F, FontStyle.Regular, GraphicsUnit.Point);
             var lblIcon = new Label
             {
                 Text = iconChar,
@@ -519,28 +712,67 @@ namespace RentaVehiculo
             };
             iconPanel.Controls.Add(lblIcon);
 
-            card.Controls.Add(lblTitle);
-            card.Controls.Add(lblVal);
-            card.Controls.Add(lblSub);
-            card.Controls.Add(iconPanel);
+            const int iconColumn = 50;
+            const int gapTextIcon = 10;
 
-            card.Resize += (_, _) =>
+            void RelayoutCard()
             {
-                iconPanel.Left = card.ClientSize.Width - iconPanel.Width - 18;
-            };
+                if (!card.IsHandleCreated || card.ClientSize.Width <= 0)
+                    return;
+
+                var padL = card.Padding.Left;
+                var padR = card.Padding.Right;
+                var padT = card.Padding.Top;
+                var padB = card.Padding.Bottom;
+                var cw = card.ClientSize.Width;
+                var ch = card.ClientSize.Height;
+
+                var textW = cw - padL - padR - iconColumn - gapTextIcon;
+                if (textW < 120)
+                    textW = 120;
+
+                lblTitle.MaximumSize = new Size(textW, 0);
+                lblSub.MaximumSize = new Size(textW, 0);
+
+                var y = 0;
+                lblTitle.Location = new Point(0, y);
+                y += lblTitle.GetPreferredSize(new Size(textW, int.MaxValue)).Height + 8;
+
+                lblVal.Location = new Point(0, y);
+                y += lblVal.GetPreferredSize(new Size(textW, int.MaxValue)).Height + 10;
+
+                lblSub.Location = new Point(0, y);
+                y += lblSub.GetPreferredSize(new Size(textW, int.MaxValue)).Height + 4;
+
+                var innerAvailH = Math.Max(1, ch - padT - padB);
+                textPane.SetBounds(padL, padT, textW, innerAvailH);
+                textPane.AutoScroll = y > innerAvailH;
+                iconPanel.Location = new Point(cw - padR - iconPanel.Width, padT);
+            }
+
+            void WireRelayout(Label L) => L.TextChanged += (_, _) => RelayoutCard();
+
+            WireRelayout(lblTitle);
+            WireRelayout(lblVal);
+            WireRelayout(lblSub);
+
+            card.Controls.Add(textPane);
+            card.Controls.Add(iconPanel);
+            card.Resize += (_, _) => RelayoutCard();
+            card.HandleCreated += (_, _) => RelayoutCard();
 
             outer.Controls.Add(card);
-            return outer;
+            return (outer, lblVal, lblSub);
         }
 
-        private Control CreateQuickCard(string title, string desc, string iconChar)
+        private Control CreateQuickCard(string title, string desc, string iconChar, Action? onClick = null)
         {
             var wrap = new Panel
             {
-                Padding = new Padding(0, 0, 12, 12),
+                Padding = new Padding(0, 0, 12, 14),
                 Dock = DockStyle.Fill,
                 BackColor = Color.Transparent,
-                MinimumSize = new Size(200, 76)
+                MinimumSize = new Size(220, 96)
             };
 
             var card = new Guna2Panel
@@ -551,13 +783,14 @@ namespace RentaVehiculo
                 BorderThickness = 1,
                 BorderColor = Color.FromArgb(226, 232, 240),
                 Cursor = Cursors.Hand,
+                Padding = new Padding(4, 4, 4, 4),
                 ShadowDecoration = { Enabled = true, Depth = 3, Color = Color.FromArgb(25, 0, 0, 0) }
             };
 
             var iconBox = new Guna2Panel
             {
-                Size = new Size(44, 44),
-                Location = new Point(14, 16),
+                Size = new Size(48, 48),
+                Location = new Point(16, 20),
                 FillColor = Color.FromArgb(224, 242, 254),
                 BorderRadius = 10
             };
@@ -569,7 +802,8 @@ namespace RentaVehiculo
                 AutoSize = false,
                 Size = iconBox.Size,
                 TextAlign = ContentAlignment.MiddleCenter,
-                BackColor = Color.Transparent
+                BackColor = Color.Transparent,
+                Cursor = Cursors.Hand
             };
             iconBox.Controls.Add(ic);
 
@@ -579,22 +813,36 @@ namespace RentaVehiculo
                 Font = new Font("Segoe UI", 10F, FontStyle.Bold),
                 ForeColor = _textDark,
                 AutoSize = true,
-                Location = new Point(68, 16)
+                MaximumSize = new Size(320, 0),
+                Location = new Point(76, 18),
+                Cursor = Cursors.Hand
             };
             var lblD = new Label
             {
                 Text = desc,
-                Font = new Font("Segoe UI", 8.5F),
+                Font = new Font("Segoe UI", 9F),
                 ForeColor = Color.FromArgb(100, 116, 139),
                 AutoSize = false,
-                Size = new Size(280, 36),
-                Location = new Point(68, 36)
+                Size = new Size(320, 44),
+                Location = new Point(76, 44),
+                Cursor = Cursors.Hand
             };
 
             card.Controls.Add(iconBox);
             card.Controls.Add(lblT);
             card.Controls.Add(lblD);
             wrap.Controls.Add(card);
+
+            if (onClick != null)
+            {
+                void invoke(object? _, EventArgs __) => onClick();
+                card.Click += invoke;
+                wrap.Click += invoke;
+                lblT.Click += invoke;
+                lblD.Click += invoke;
+                ic.Click += invoke;
+                iconBox.Click += invoke;
+            }
 
             return wrap;
         }
@@ -605,22 +853,23 @@ namespace RentaVehiculo
             {
                 AutoSize = true,
                 BackColor = Color.Transparent,
-                Padding = new Padding(0, 0, 0, 12),
+                Padding = new Padding(4, 10, 12, 18),
+                MinimumSize = new Size(400, 88),
                 Width = 760
             };
 
             var iconCircle = new Guna2Panel
             {
-                Size = new Size(40, 40),
-                Location = new Point(4, 4),
+                Size = new Size(44, 44),
+                Location = new Point(8, 12),
                 FillColor = Blend(accent, Color.White, 0.88f),
-                BorderRadius = 20
+                BorderRadius = 22
             };
 
             var li = new Label
             {
                 Text = iconChar,
-                Font = new Font("Segoe MDL2 Assets", 14F),
+                Font = new Font("Segoe MDL2 Assets", 15F),
                 ForeColor = accent,
                 AutoSize = false,
                 Size = iconCircle.Size,
@@ -634,24 +883,25 @@ namespace RentaVehiculo
                 Text = title,
                 Font = new Font("Segoe UI", 10F, FontStyle.Bold),
                 ForeColor = _textDark,
-                Location = new Point(52, 4),
-                AutoSize = true
+                Location = new Point(64, 10),
+                AutoSize = true,
+                MaximumSize = new Size(640, 0)
             };
             var lblD = new Label
             {
                 Text = detail,
                 Font = new Font("Segoe UI", 9F),
                 ForeColor = Color.FromArgb(100, 116, 139),
-                Location = new Point(52, 24),
+                Location = new Point(64, 36),
                 AutoSize = true,
-                MaximumSize = new Size(620, 0)
+                MaximumSize = new Size(640, 0)
             };
             var lblW = new Label
             {
                 Text = when,
-                Font = new Font("Segoe UI", 8.5F),
+                Font = new Font("Segoe UI", 9F),
                 ForeColor = _textMuted,
-                Location = new Point(52, 44),
+                Location = new Point(64, 62),
                 AutoSize = true
             };
 

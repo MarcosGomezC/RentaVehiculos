@@ -1,6 +1,6 @@
-﻿namespace RentaVehiculo.UI.Usuarios
+namespace RentaVehiculo.UI.Reservas
 {
-    partial class UsuarioList
+    partial class ReservaList
     {
         private System.ComponentModel.IContainer components = null;
 
@@ -32,7 +32,7 @@
             label1.AutoSize = true;
             label1.Font = new Font("Segoe UI", 13F, FontStyle.Bold);
             label1.Location = new Point(20, 14);
-            label1.Text = "Usuarios del sistema";
+            label1.Text = "Reservas";
             button1.Font = new Font("Segoe UI", 9F);
             button1.Location = new Point(20, 58);
             button1.Size = new Size(132, 42);
@@ -60,9 +60,9 @@
             Controls.Add(dataGridView1);
             Controls.Add(panelToolbar);
             MinimumSize = new Size(900, 460);
-            Name = "UsuarioList";
-            Text = "Usuarios";
-            Load += UsuarioList_Load;
+            Name = "ReservaList";
+            Text = "Reservas";
+            Load += ReservaList_Load;
             panelToolbar.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)dataGridView1).EndInit();
             ResumeLayout(false);
